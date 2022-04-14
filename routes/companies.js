@@ -15,7 +15,7 @@ router.get("/", async function (req, res) {
   return res.json({ companies });
 });
 
-router.get("/:code", async function (req, res) {
+router.get("/:code", async function (req, res, next) {
   const code = req.params.code;
   const results = await db.query(
     `SELECT code, name, description FROM companies
@@ -25,6 +25,17 @@ router.get("/:code", async function (req, res) {
   if (!company) {
     throw new NotFoundError("Company code not found.");
   }
+
+  const compCode = company.code;
+
+  const invResponse = await db.query(
+    `SELECT id
+      FROM invoices
+      WHERE comp_code = $1`, [compCode]);
+  debugger;
+  const invoices = invResponse.rows.map(record => record.id);
+  company.invoices = invoices;
+
   return res.json({ company });
 });
 
