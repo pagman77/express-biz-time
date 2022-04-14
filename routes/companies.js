@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 const express = require('express');
 const app = require('../app');
@@ -11,7 +11,8 @@ router.get("/", async function (req, res) {
   const results = await db.query(
     'SELECT code, name, description FROM companies'
   );
-  return res.json({ companies: results.rows });
+  const companies = results.rows;
+  return res.json({ companies });
 });
 
 router.get("/:code", async function (req, res) {
@@ -19,13 +20,12 @@ router.get("/:code", async function (req, res) {
   const results = await db.query(
     `SELECT code, name, description FROM companies
       WHERE code = $1`, [code]
-    );
-
-  if (results.rows[0] === undefined) {
+  );
+  const company = results.rows[0];
+  if (!company) {
     throw new NotFoundError("Company code not found.");
   }
-  return res.json({ company: results.rows[0] });
-
+  return res.json({ company });
 });
 
 router.post("/", async function (req, res) {
@@ -36,7 +36,8 @@ router.post("/", async function (req, res) {
       RETURNING code, name, description`,
     [code, name, description]
   );
-  return res.status(201).json({ company: results.rows[0] });
+  const company = results.rows[0];
+  return res.status(201).json({ company });
 });
 
 router.put("/:code", async function (req, res) {
@@ -45,34 +46,30 @@ router.put("/:code", async function (req, res) {
 
   const results = await db.query(
     `UPDATE companies
-    SET name = $1,
-    description = $2
-      WHERE code = $3 RETURNING code, name, description`, [name, description, code]
+      SET name = $1
+      description = $2
+      WHERE code = $3
+      RETURNING code, name, description`, [name, description, code]
   );
-
-  if (results.rows[0] === undefined) {
+  const company = results.rows[0];
+  if (!company) {
     throw new NotFoundError("Company code not found.");
   }
-  return res.json({ company: results.rows[0] });
+  return res.json({ company });
 });
 
 router.delete("/:code", async function (req, res) {
   const code = req.params.code;
-  const item = await db.query(
-    `SELECT code, name, description FROM companies
-      WHERE code = $1`, [code]
-  );
-
-  if (item.rows[0] === undefined) {
-    throw new NotFoundError("Company code not found.");
-  }
-  // If company code found, delete the company
-
   const results = await db.query(
     `DELETE from companies
-      WHERE code = $1`, [code]
+    WHERE code = $1
+    RETURNING code`, [code]
     );
+  const company = results.rows[0];
 
+    if (!company) {
+      throw new NotFoundError("Company code not found.");
+    }
   return res.json({ message: "Successfully deleted." });
 });
 
