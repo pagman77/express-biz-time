@@ -32,7 +32,7 @@ router.get("/:code", async function (req, res, next) {
     `SELECT id
       FROM invoices
       WHERE comp_code = $1`, [compCode]);
-  debugger;
+
   const invoices = invResponse.rows.map(record => record.id);
   company.invoices = invoices;
 

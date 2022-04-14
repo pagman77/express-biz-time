@@ -24,7 +24,7 @@ router.get("/:id", async (req, res) => {
     `SELECT id, amt, paid, add_date, paid_date, comp_code AS company
       FROM invoices
       WHERE id = $1`, [id]);
-
+  // USE JOIN
   const invoice = invResponse.rows[0];
 
   if (!invoice) {
@@ -51,22 +51,15 @@ router.post("/", async (req, res) => {
   const response = await db.query(
     `INSERT INTO invoices (comp_code, amt)
     VALUES ($1, $2)
-    RETURNING id`,
+    RETURNING id, comp_code, amt, paid, add_date, paid_date`,
     [comp_code, amt]);
 
-  const id = response.rows[0].id;
-
-  const invResponse = await db.query(
-    `SELECT id, amt, paid, add_date, paid_date
-      FROM invoices
-      WHERE id = $1`, [id]);
-
-  const invoice = invResponse.rows[0];
+  const invoice = response.rows[0];
 
   return res.status(201).json({ invoice });
 });
 
-/** Update an exisiting invoice. */
+/** Update an existing invoice. */
 router.put("/:id", async (req, res) => {
   const amt = req.body.amt;
   const id = req.params.id;
